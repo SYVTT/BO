@@ -1,3 +1,4 @@
+import random
 import sys
 
 import numpy as np
@@ -22,7 +23,7 @@ def print_sudoku(array, dim):
 def get_row(array, number, dim):
     if not check_array_dim(array, dim) or number >= dim or number < 0:
         return None
-    return array[number]
+    return [i for i in array[number]]
 
 
 def get_column(array, number, dim):
@@ -60,33 +61,40 @@ class Swarm:
     mask = None
     array = None
     dim = 9
-    number_of_particles = 1
-    number_of_iterations = 10000
+    number_of_particles = 500
+    number_of_iterations = 200
     particles = None
     best_fitness = 0
     best_position = None
+    row_nums = None
 
-    def __init__(self, array):
+    def __init__(self, array, w, f_1, f_2):
         self.array = array
+        self.w = w
+        self.f_1 = f_1
+        self.f_2 = f_2
 
     def start(self):
         print_sudoku(self.sudoku, self.dim)
-        self.particles = [Particle(self.sudoku, self.mask, self.dim) for i in range(self.number_of_particles)]
+        self.particles = [Particle(self.sudoku, self.mask, self.dim, self.row_nums, self.w, self.f_1, self.f_2)
+                          for i in range(self.number_of_particles)]
         for particle in self.particles:
             if particle.get_fitness() > self.best_fitness:
                 self.best_fitness = particle.get_fitness()
                 self.best_position = particle.get_position()
 
-        # iteration = 0
-        # while self.best_fitness < 3*self.dim**2 and iteration < self.number_of_iterations:
-        #     for particle in self.particles:
-        #         particle.update_position(self.best_fitness, self.best_position)
-        #
-        #     for particle in self.particles:
-        #         particle.next_position()
-        #         if particle.get_fitness() > self.best_fitness:
-        #             self.best_fitness = particle.get_fitness()
-        #             self.best_position = particle.get_position()
+        iteration = 0
+        while self.best_fitness < 3*self.dim**2 and iteration < self.number_of_iterations:
+            print(iteration)
+            for particle in self.particles:
+                particle.update_global_position(self.best_fitness, self.best_position)
+
+            for particle in self.particles:
+                particle.next_position()
+                if particle.get_fitness() > self.best_fitness:
+                    self.best_fitness = particle.get_fitness()
+                    self.best_position = particle.get_position()
+            iteration += 1
 
         print(self.best_fitness)
         print_sudoku(self.best_position, self.dim)
@@ -140,9 +148,19 @@ class Swarm:
                     if not self.is_empty(cell):
                         self.sudoku[i][j] = int(cell)
                         self.mask[i][j] = True
+            self.count_row_nums()
 
         except ValueError:
             return None
+
+    def count_row_nums(self):
+        self.row_nums = {}
+        for i in range(self.dim):
+            nums = []
+            for num in self.mask[i]:
+                if not num:
+                    nums.append(num)
+            self.row_nums[i] = nums
 
     def contains_duplicates(self, flat_array):
         numbers = set()
@@ -156,10 +174,18 @@ class Swarm:
 
 
 class Particle:
-    def __init__(self, sudoku, mask, dim):
+    def __init__(self, sudoku, mask, dim, row_nums, w, f_1, f_2):
         self.mask = mask
         self.dim = dim
         self.sudoku = self.random_complete(sudoku, mask)
+        self.best_position = sudoku
+        self.best_fitness = self.get_fitness()
+        self.best_global_fitness = self.best_fitness
+        self.best_global_position = self.best_position
+        self.row_nums = row_nums
+        self.w = w / 100
+        self.f_1 = f_1 / 100
+        self.f_2 = f_2 / 100
 
     def random_complete(self, sudoku, mask):
         array = [[0 for j in range(self.dim)] for i in range(self.dim)]
@@ -178,7 +204,13 @@ class Particle:
         return array
 
     def get_fitness(self):
-        return 1
+        sum = 0
+        for i in range(self.dim):
+            row = get_row(self.sudoku, i, self.dim)
+            column = get_column(self.sudoku, i, self.dim)
+            box = get_box(self.sudoku, i, self.dim)
+            sum += len(set(row)) + len(set(column)) + len(set(box))
+        return sum
 
     def get_position(self):
         return self.copy_of(self.sudoku)
@@ -189,3 +221,54 @@ class Particle:
             for j in range(self.dim):
                 copy[i][j] = sudoku[i][j]
         return copy
+
+    def update_global_position(self, best_global_fitness, best_global_position):
+        if best_global_fitness > self.best_global_fitness:
+            self.best_global_position = best_global_position
+
+    def next_position(self):
+        possible_rows = [i for i in range(self.dim) if len(self.row_nums[i]) >= 2]
+        row = random.choice(possible_rows)
+
+        self_row = get_row(self.sudoku, row, self.dim)
+        local_row = get_row(self.best_position, row, self.dim)
+        global_row = get_row(self.best_global_position, row, self.dim)
+
+        possible_indexes = [i for i in range(self.dim) if not self.mask[row][i]]
+        new_row = self.crossover(self_row, local_row, global_row)
+
+        a, b = random.sample(range(0, len(possible_indexes)), 2)
+        tmp = new_row[a]
+        new_row[a] = new_row[b]
+        new_row[b] = tmp
+
+        for i in range(self.dim):
+            self.sudoku[row][i] = new_row[i]
+
+    def crossover(self, self_row, local_row, global_row):
+        new_row = [0 for i in range(len(self_row))]
+        for i in range(len(self_row)):
+            # choice = random.randint(0, 2)
+            choice = np.random.choice([0, 1, 2], p=[self.w, self.f_1, self.f_2])
+            if choice == 0:
+                new_row[i] = self_row[i]
+                self.swap(i, new_row[i], local_row, global_row)
+            elif choice == 2:
+                new_row[i] = local_row[i]
+                self.swap(i, new_row[i], self_row, global_row)
+            else:
+                new_row[i] = global_row[i]
+                self.swap(i, new_row[i], self_row, local_row)
+
+        return new_row
+
+    def swap(self, position, number, a, b):
+        idx = position
+        while idx < len(a):
+            if a[idx] == number:
+                a[idx] = a[position]
+                a[position] = number
+            if b[idx] == number:
+                b[idx] = b[position]
+                b[position] = number
+            idx += 1

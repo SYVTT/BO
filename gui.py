@@ -51,7 +51,7 @@ class View:
             messagebox.showinfo('Error', 'Factors must sum to 100')
         else:
             sudoku = [[self.sudoku_entries[i][j].get() for j in range(9)] for i in range(9)]
-            self.swarm = Swarm(sudoku)
+            self.swarm = Swarm(sudoku, self.first_factor.get(), self.second_factor.get(), self.third_factor.get())
 
             if not self.swarm.check_correctness():
                 # check if user gave only numbers 1-9
