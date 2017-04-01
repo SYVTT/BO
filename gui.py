@@ -58,7 +58,8 @@ class View:
                 messagebox.showinfo('Error', 'Only numbers 1-9 possible')
             else:
                 # do the rest
-                print('Actually do algo')
+                self.swarm.start()
+                # print('Actually do algo')
 
         self.unblock_gui()
 
