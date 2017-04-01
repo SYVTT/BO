@@ -1,9 +1,12 @@
 from tkinter import *
 from tkinter import messagebox
 
+from sudoku_PSO import Swarm
+
 
 class View:
     def __init__(self):
+        self.swarm = None
         self.root = Tk()
         self.root.title('Sudoku - PSO')
 
@@ -44,10 +47,18 @@ class View:
     def on_start(self):
         self.block_gui()
         if self.first_factor.get() + self.second_factor.get() + self.third_factor.get() != 100:
+            # check if w + f_1 + f_2 == 100
             messagebox.showinfo('Error', 'Factors must sum to 100')
         else:
-            # do the rest
-            print('Actually do algo')
+            sudoku = [[self.sudoku_entries[i][j].get() for j in range(9)] for i in range(9)]
+            self.swarm = Swarm(sudoku)
+
+            if not self.swarm.check_correctness():
+                # check if user gave only numbers 1-9
+                messagebox.showinfo('Error', 'Only numbers 1-9 possible')
+            else:
+                # do the rest
+                print('Actually do algo')
 
         self.unblock_gui()
 
