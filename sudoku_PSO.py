@@ -77,13 +77,14 @@ class Swarm:
         self.particles = [Particle(self.sudoku, self.mask, self.dim, self.row_nums, self.w, self.f_1, self.f_2)
                           for i in range(self.number_of_particles)]
         for particle in self.particles:
-            if particle.get_fitness() > self.best_fitness:
-                self.best_fitness = particle.get_fitness()
-                self.best_position = particle.get_position()
+            if particle.get_best_fitness() > self.best_fitness:
+                self.best_fitness = particle.get_best_fitness()
+                self.best_position = particle.get_best_position()
 
         iteration = 0
         while self.best_fitness < 3*self.dim**2 and iteration < self.number_of_iterations:
             print(iteration)
+
             for particle in self.particles:
                 particle.update_global_position(self.best_fitness, self.best_position)
 
@@ -176,7 +177,7 @@ class Particle:
         self.mask = mask
         self.dim = dim
         self.sudoku = self.random_complete(sudoku, mask)
-        self.best_position = sudoku
+        self.best_position = self.copy_of(self.sudoku)
         self.best_fitness = self.get_fitness()
         self.best_global_fitness = self.best_fitness
         self.best_global_position = self.best_position
@@ -215,6 +216,9 @@ class Particle:
     def get_position(self):
         return self.copy_of(self.sudoku)
 
+    def get_best_position(self):
+        return self.copy_of(self.best_position)
+
     # OK
     def get_best_fitness(self):
         return self.best_fitness
@@ -246,6 +250,9 @@ class Particle:
             if random.uniform(0, 1) < 0.4:
                 possible_indexes = [i for i in range(self.dim) if not self.mask[row][i]]
                 a, b = random.sample(range(0, len(possible_indexes)), 2)
+                # not sure
+                a = possible_indexes[a]
+                b = possible_indexes[b]
                 tmp = new_row[a]
                 new_row[a] = new_row[b]
                 new_row[b] = tmp
@@ -273,6 +280,10 @@ class Particle:
             else:
                 new_row[i] = global_row[i]
                 self.swap(i, new_row[i], self_row, local_row)
+
+        for i in range(self.dim):
+            if new_row[i] == 0:
+                print("ERROR")
 
         return new_row
 
