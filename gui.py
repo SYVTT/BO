@@ -22,14 +22,17 @@ class View:
         self.exit_button = Button(self.upper_frame, text="Exit", command=self.on_exit)
         self.exit_button.pack(side=LEFT)
 
-        self.first_factor = Scale(self.factor_frame, label='w', orient=HORIZONTAL, length=150)
-        self.first_factor.pack()
+        self.mutation = Scale(self.factor_frame, label='mutation', orient=HORIZONTAL, length=150)
+        self.mutation.pack()
 
-        self.second_factor = Scale(self.factor_frame, label='f_1', orient=HORIZONTAL, length=150)
-        self.second_factor.pack()
+        self.inertia = Scale(self.factor_frame, label='inertia', orient=HORIZONTAL, length=150)
+        self.inertia.pack()
 
-        self.third_factor = Scale(self.factor_frame, label='f_2', orient=HORIZONTAL, length=150)
-        self.third_factor.pack()
+        self.global_factor = Scale(self.factor_frame, label='global', orient=HORIZONTAL, length=150)
+        self.global_factor.pack()
+
+        self.local_factor = Scale(self.factor_frame, label='local', orient=HORIZONTAL, length=150)
+        self.local_factor.pack()
 
         self.row_frames = [Frame(self.root) for i in range(9)]
         for frame in self.row_frames:
@@ -46,12 +49,12 @@ class View:
 
     def on_start(self):
         self.block_gui()
-        if self.first_factor.get() + self.second_factor.get() + self.third_factor.get() != 100:
+        if self.inertia.get() + self.global_factor.get() + self.local_factor.get() != 100:
             # check if w + f_1 + f_2 == 100
             messagebox.showinfo('Error', 'Factors must sum to 100')
         else:
             sudoku = [[self.sudoku_entries[i][j].get() for j in range(9)] for i in range(9)]
-            self.swarm = Swarm(sudoku, self.first_factor.get(), self.second_factor.get(), self.third_factor.get())
+            self.swarm = Swarm(sudoku, self.mutation.get(), self.inertia.get(), self.global_factor.get(), self.local_factor.get())
 
             if not self.swarm.check_correctness():
                 # check if user gave only numbers 1-9
@@ -68,9 +71,10 @@ class View:
     def block_gui(self):
         self.start_button['state'] = DISABLED
         self.exit_button['state'] = DISABLED
-        self.first_factor['state'] = DISABLED
-        self.second_factor['state'] = DISABLED
-        self.third_factor['state'] = DISABLED
+        self.mutation['state'] = DISABLED
+        self.inertia['state'] = DISABLED
+        self.global_factor['state'] = DISABLED
+        self.local_factor['state'] = DISABLED
         for i in range(9):
             for j in range(9):
                 self.sudoku_entries[i][j]['state'] = DISABLED
@@ -78,9 +82,10 @@ class View:
     def unblock_gui(self):
         self.start_button['state'] = NORMAL
         self.exit_button['state'] = NORMAL
-        self.first_factor['state'] = NORMAL
-        self.second_factor['state'] = NORMAL
-        self.third_factor['state'] = NORMAL
+        self.mutation['state'] = NORMAL
+        self.inertia['state'] = NORMAL
+        self.global_factor['state'] = NORMAL
+        self.local_factor['state'] = NORMAL
         for i in range(9):
             for j in range(9):
                 self.sudoku_entries[i][j]['state'] = NORMAL

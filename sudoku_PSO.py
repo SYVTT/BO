@@ -59,22 +59,24 @@ class Swarm:
     mask = None
     array = None
     dim = 9
-    number_of_particles = 100
-    number_of_iterations = 1000
+    number_of_particles = 500
+    number_of_iterations = 200
     particles = None
     best_fitness = 0
     best_position = None
     row_nums = None
 
-    def __init__(self, array, w, f_1, f_2):
+    def __init__(self, array, mutation, inertia, global_factor, local_factor):
         self.array = array
-        self.w = w
-        self.f_1 = f_1
-        self.f_2 = f_2
+        self.mutation = mutation
+        self.inertia = inertia
+        self.global_factor = global_factor
+        self.local_factor = local_factor
 
     def start(self):
         print_sudoku(self.sudoku, self.dim)
-        self.particles = [Particle(self.sudoku, self.mask, self.dim, self.row_nums, self.w, self.f_1, self.f_2)
+        self.particles = [Particle(self.sudoku, self.mask, self.dim, self.row_nums, self.mutation, self.inertia, self.global_factor,
+                                   self.local_factor)
                           for i in range(self.number_of_particles)]
         for particle in self.particles:
             if particle.get_best_fitness() > self.best_fitness:
@@ -83,7 +85,7 @@ class Swarm:
 
         iteration = 0
         while self.best_fitness < 3*self.dim**2 and iteration < self.number_of_iterations:
-            print(iteration)
+            print('i = ' + str(iteration) + '   | fitness = ' + str(self.best_fitness))
 
             for particle in self.particles:
                 particle.update_global_position(self.best_fitness, self.best_position)
@@ -173,7 +175,7 @@ class Swarm:
 
 
 class Particle:
-    def __init__(self, sudoku, mask, dim, row_nums, w, f_1, f_2):
+    def __init__(self, sudoku, mask, dim, row_nums, mutation, inertia, global_factor, local_factor):
         self.mask = mask
         self.dim = dim
         self.sudoku = self.random_complete(sudoku, mask)
@@ -182,9 +184,10 @@ class Particle:
         self.best_global_fitness = self.best_fitness
         self.best_global_position = self.best_position
         self.row_nums = row_nums
-        self.w = w / 100
-        self.f_1 = f_1 / 100
-        self.f_2 = f_2 / 100
+        self.mutation = mutation / 100
+        self.inertia = inertia / 100
+        self.global_factor = global_factor / 100
+        self.local_factor = local_factor / 100
 
     def random_complete(self, sudoku, mask):
         array = [[0 for j in range(self.dim)] for i in range(self.dim)]
@@ -239,7 +242,7 @@ class Particle:
 
     def next_position(self):
         possible_rows = [i for i in range(self.dim) if len(self.row_nums[i]) >= 2]
-        # row = random.choice(possible_rows)
+
         for row in possible_rows:
             self_row = get_row(self.sudoku, row)
             local_row = get_row(self.best_position, row)
@@ -247,18 +250,31 @@ class Particle:
 
             new_row = self.crossover(self_row, local_row, global_row)
 
-            if random.uniform(0, 1) < 0.4:
-                possible_indexes = [i for i in range(self.dim) if not self.mask[row][i]]
-                a, b = random.sample(range(0, len(possible_indexes)), 2)
-                # not sure
-                a = possible_indexes[a]
-                b = possible_indexes[b]
-                tmp = new_row[a]
-                new_row[a] = new_row[b]
-                new_row[b] = tmp
+            # 1st version
+            # if random.uniform(0, 1) < self.mutation:
+            #     possible_indexes = [i for i in range(self.dim) if not self.mask[row][i]]
+            #     a, b = random.sample(range(0, len(possible_indexes)), 2)
+            #     # not sure
+            #     a = possible_indexes[a]
+            #     b = possible_indexes[b]
+            #     tmp = new_row[a]
+            #     new_row[a] = new_row[b]
+            #     new_row[b] = tmp
 
             for i in range(self.dim):
                 self.sudoku[row][i] = new_row[i]
+
+        # 2nd version
+        row = random.choice(possible_rows)
+        if random.uniform(0, 1) < self.mutation:
+            possible_indexes = [i for i in range(self.dim) if not self.mask[row][i]]
+            a, b = random.sample(range(0, len(possible_indexes)), 2)
+            # not sure
+            a = possible_indexes[a]
+            b = possible_indexes[b]
+            tmp = self.sudoku[row][a]
+            self.sudoku[row][a] = self.sudoku[row][b]
+            self.sudoku[row][b] = tmp
 
         fitness = self.get_fitness()
         if fitness > self.best_fitness:
@@ -270,7 +286,7 @@ class Particle:
         new_row = [0 for i in range(len(self_row))]
         for i in range(len(self_row)):
             # choice = random.randint(0, 2)
-            choice = np.random.choice([0, 1, 2], p=[self.w, self.f_1, self.f_2])
+            choice = np.random.choice([0, 1, 2], p=[self.inertia, self.global_factor, self.local_factor])
             if choice == 0:
                 new_row[i] = self_row[i]
                 self.swap(i, new_row[i], local_row, global_row)
@@ -280,10 +296,6 @@ class Particle:
             else:
                 new_row[i] = global_row[i]
                 self.swap(i, new_row[i], self_row, local_row)
-
-        for i in range(self.dim):
-            if new_row[i] == 0:
-                print("ERROR")
 
         return new_row
 
