@@ -57,9 +57,7 @@ class View:
                 # check if user gave only numbers 1-9
                 messagebox.showinfo('Error', 'Only numbers 1-9 possible')
             else:
-                # do the rest
                 self.swarm.start()
-                # print('Actually do algo')
 
         self.unblock_gui()
 
