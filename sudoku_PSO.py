@@ -59,15 +59,15 @@ class Swarm:
     mask = None
     array = None
     dim = 9
-    number_of_particles = 500
-    number_of_iterations = 200
     particles = None
     best_fitness = 0
     best_position = None
     row_nums = None
 
-    def __init__(self, array, mutation, inertia, global_factor, local_factor):
+    def __init__(self, array, particles_number, iterations, mutation, inertia, global_factor, local_factor):
         self.array = array
+        self.particles_number = particles_number
+        self.iterations = iterations
         self.mutation = mutation
         self.inertia = inertia
         self.global_factor = global_factor
@@ -77,14 +77,14 @@ class Swarm:
         print_sudoku(self.sudoku, self.dim)
         self.particles = [Particle(self.sudoku, self.mask, self.dim, self.row_nums, self.mutation, self.inertia, self.global_factor,
                                    self.local_factor)
-                          for i in range(self.number_of_particles)]
+                          for i in range(self.particles_number)]
         for particle in self.particles:
             if particle.get_best_fitness() > self.best_fitness:
                 self.best_fitness = particle.get_best_fitness()
                 self.best_position = particle.get_best_position()
 
         iteration = 0
-        while self.best_fitness < 3*self.dim**2 and iteration < self.number_of_iterations:
+        while self.best_fitness < 3*self.dim**2 and iteration < self.iterations:
             print('i = ' + str(iteration) + '   | fitness = ' + str(self.best_fitness))
 
             for particle in self.particles:

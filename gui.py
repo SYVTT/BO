@@ -22,6 +22,12 @@ class View:
         self.exit_button = Button(self.upper_frame, text="Exit", command=self.on_exit)
         self.exit_button.pack(side=LEFT)
 
+        self.particles_number = Scale(self.factor_frame, from_=1, to_=200, label='particles number', orient=HORIZONTAL, length=150)
+        self.particles_number.pack()
+
+        self.iterations = Scale(self.factor_frame, from_=0, to_=2000, label='iterations', orient=HORIZONTAL, length=150)
+        self.iterations.pack()
+
         self.mutation = Scale(self.factor_frame, label='mutation', orient=HORIZONTAL, length=150)
         self.mutation.pack()
 
@@ -49,12 +55,14 @@ class View:
 
     def on_start(self):
         self.block_gui()
-        if self.inertia.get() + self.global_factor.get() + self.local_factor.get() != 100:
+        if self.particles_number.get() == 0:
+            pass
+        elif self.inertia.get() + self.global_factor.get() + self.local_factor.get() != 100:
             # check if w + f_1 + f_2 == 100
-            messagebox.showinfo('Error', 'Factors must sum to 100')
+            messagebox.showinfo('Error', 'Factors (inertia, global, local) must sum to 100')
         else:
             sudoku = [[self.sudoku_entries[i][j].get() for j in range(9)] for i in range(9)]
-            self.swarm = Swarm(sudoku, self.mutation.get(), self.inertia.get(), self.global_factor.get(), self.local_factor.get())
+            self.swarm = Swarm(sudoku, self.particles_number.get(), self.iterations.get(), self.mutation.get(), self.inertia.get(), self.global_factor.get(), self.local_factor.get())
 
             if not self.swarm.check_correctness():
                 # check if user gave only numbers 1-9
@@ -71,6 +79,8 @@ class View:
     def block_gui(self):
         self.start_button['state'] = DISABLED
         self.exit_button['state'] = DISABLED
+        self.particles_number['state'] = DISABLED
+        self.iterations['state'] = DISABLED
         self.mutation['state'] = DISABLED
         self.inertia['state'] = DISABLED
         self.global_factor['state'] = DISABLED
@@ -83,6 +93,8 @@ class View:
         self.start_button['state'] = NORMAL
         self.exit_button['state'] = NORMAL
         self.mutation['state'] = NORMAL
+        self.particles_number['state'] = NORMAL
+        self.iterations['state'] = NORMAL
         self.inertia['state'] = NORMAL
         self.global_factor['state'] = NORMAL
         self.local_factor['state'] = NORMAL
