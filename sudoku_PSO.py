@@ -260,30 +260,30 @@ class Particle:
             new_row = self.crossover(self_row, local_row, global_row)
 
             # 1st version
-            if random.uniform(0, 1) < self.mutation:
-                possible_indexes = [i for i in range(self.dim) if not self.mask[row][i]]
-                a, b = random.sample(range(0, len(possible_indexes)), 2)
-
-                a = possible_indexes[a]
-                b = possible_indexes[b]
-                tmp = new_row[a]
-                new_row[a] = new_row[b]
-                new_row[b] = tmp
+            # if random.uniform(0, 1) < self.mutation:
+            #     possible_indexes = [i for i in range(self.dim) if not self.mask[row][i]]
+            #     a, b = random.sample(range(0, len(possible_indexes)), 2)
+            #
+            #     a = possible_indexes[a]
+            #     b = possible_indexes[b]
+            #     tmp = new_row[a]
+            #     new_row[a] = new_row[b]
+            #     new_row[b] = tmp
 
             for i in range(self.dim):
                 self.sudoku[row][i] = new_row[i]
 
         # 2nd version
-        # row = random.choice(possible_rows)
-        # if random.uniform(0, 1) < self.mutation:
-        #     possible_indexes = [i for i in range(self.dim) if not self.mask[row][i]]
-        #     a, b = random.sample(range(0, len(possible_indexes)), 2)
-        #     # not sure
-        #     a = possible_indexes[a]
-        #     b = possible_indexes[b]
-        #     tmp = self.sudoku[row][a]
-        #     self.sudoku[row][a] = self.sudoku[row][b]
-        #     self.sudoku[row][b] = tmp
+        row = random.choice(possible_rows)
+        if random.uniform(0, 1) < self.mutation:
+            possible_indexes = [i for i in range(self.dim) if not self.mask[row][i]]
+            a, b = random.sample(range(0, len(possible_indexes)), 2)
+
+            a = possible_indexes[a]
+            b = possible_indexes[b]
+            tmp = self.sudoku[row][a]
+            self.sudoku[row][a] = self.sudoku[row][b]
+            self.sudoku[row][b] = tmp
 
         fitness = self.get_fitness()
         if fitness > self.best_fitness:
