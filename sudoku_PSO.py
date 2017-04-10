@@ -20,31 +20,27 @@ def print_sudoku(array, dim):
     sys.stdout.write('\n')
 
 
-# OK
 def get_row(array, number):
     return [i for i in array[number]]
 
 
-# OK
 def get_column(array, number, dim):
     return [array[i][number] for i in range(dim)]
 
 
-# OK
 def get_box(array, number):
     # get one of the box as list
-    #  1 2 3
-    #  4 5 6
-    #  7 8 9
+    #  0 1 2
+    #  3 4 5
+    #  6 7 8
 
-    row = (number - 1) // 3
-    column = (number - 1) % 3
+    row = number // 3
+    column = number % 3
     return [array[3 * row][3 * column + i] for i in range(3)] + \
            [array[3 * row + 1][3 * column + i] for i in range(3)] + \
            [array[3 * row + 2][3 * column + i] for i in range(3)]
 
 
-# OK
 def check_array_dim(array, dim):
     if len(array) != dim:
         return False
@@ -75,16 +71,17 @@ class Swarm:
 
     def start(self):
         print_sudoku(self.sudoku, self.dim)
-        self.particles = [Particle(self.sudoku, self.mask, self.dim, self.row_nums, self.mutation, self.inertia, self.global_factor,
-                                   self.local_factor)
-                          for i in range(self.particles_number)]
+        self.particles = [
+            Particle(self.sudoku, self.mask, self.dim, self.row_nums, self.mutation, self.inertia, self.global_factor,
+                     self.local_factor)
+            for i in range(self.particles_number)]
         for particle in self.particles:
             if particle.get_best_fitness() > self.best_fitness:
                 self.best_fitness = particle.get_best_fitness()
                 self.best_position = particle.get_best_position()
 
         iteration = 0
-        while self.best_fitness < 3*self.dim**2 and iteration < self.iterations:
+        while self.best_fitness < 3 * self.dim ** 2 and iteration < self.iterations:
             print('i = ' + str(iteration) + '   | fitness = ' + str(self.best_fitness))
 
             for particle in self.particles:
@@ -214,7 +211,6 @@ class Particle:
                     idx += 1
         return array
 
-    # OK
     def get_fitness(self):
         sum = 0
         for i in range(self.dim):
@@ -224,18 +220,15 @@ class Particle:
             sum += len(set(row)) + len(set(column)) + len(set(box))
         return sum
 
-    # OK
     def get_position(self):
         return self.copy_of(self.sudoku)
 
     def get_best_position(self):
         return self.copy_of(self.best_position)
 
-    # OK
     def get_best_fitness(self):
         return self.best_fitness
 
-    # OK
     def copy_of(self, sudoku):
         copy = [[0 for j in range(self.dim)] for i in range(self.dim)]
         for i in range(self.dim):
@@ -243,7 +236,6 @@ class Particle:
                 copy[i][j] = sudoku[i][j]
         return copy
 
-    # OK
     def update_global_position(self, best_global_fitness, best_global_position):
         if best_global_fitness > self.best_global_fitness:
             self.best_global_position = best_global_position
@@ -259,38 +251,24 @@ class Particle:
 
             new_row = self.crossover(self_row, local_row, global_row)
 
-            # 1st version
-            # if random.uniform(0, 1) < self.mutation:
-            #     possible_indexes = [i for i in range(self.dim) if not self.mask[row][i]]
-            #     a, b = random.sample(range(0, len(possible_indexes)), 2)
-            #
-            #     a = possible_indexes[a]
-            #     b = possible_indexes[b]
-            #     tmp = new_row[a]
-            #     new_row[a] = new_row[b]
-            #     new_row[b] = tmp
+            if random.uniform(0, 1) < self.mutation:
+                possible_indexes = [i for i in range(self.dim) if not self.mask[row][i]]
+                a, b = random.sample(range(0, len(possible_indexes)), 2)
+
+                a = possible_indexes[a]
+                b = possible_indexes[b]
+                tmp = new_row[a]
+                new_row[a] = new_row[b]
+                new_row[b] = tmp
 
             for i in range(self.dim):
                 self.sudoku[row][i] = new_row[i]
-
-        # 2nd version
-        row = random.choice(possible_rows)
-        if random.uniform(0, 1) < self.mutation:
-            possible_indexes = [i for i in range(self.dim) if not self.mask[row][i]]
-            a, b = random.sample(range(0, len(possible_indexes)), 2)
-
-            a = possible_indexes[a]
-            b = possible_indexes[b]
-            tmp = self.sudoku[row][a]
-            self.sudoku[row][a] = self.sudoku[row][b]
-            self.sudoku[row][b] = tmp
 
         fitness = self.get_fitness()
         if fitness > self.best_fitness:
             self.best_fitness = fitness
             self.best_position = self.copy_of(self.sudoku)
 
-    # OK
     def crossover(self, self_row, local_row, global_row):
         new_row = [0 for i in range(len(self_row))]
         for i in range(len(self_row)):
@@ -308,7 +286,6 @@ class Particle:
 
         return new_row
 
-    # OK
     def swap(self, position, number, a, b):
         idx = position
         while idx < len(a):
